@@ -40,4 +40,3 @@
     ],
     "installable": True,
 }
-

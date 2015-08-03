@@ -3,16 +3,15 @@
 # For copyright and license notices, see __openerp__.py file in root directory
 ##############################################################################
 
-from openerp.osv import orm, fields
+from openerp import fields, models, api
 from openerp.addons import decimal_precision as dp
-#import decimal_precision as dp
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import re
 import logging
 
 
-class AccountBalanceReporting(orm.Model):
+class AccountBalanceReporting(models.Model):
     """
     Account balance report.
     It stores the configuration/header fields of an account balance report,
@@ -21,180 +20,149 @@ class AccountBalanceReporting(orm.Model):
     """
     _inherit = 'account.balance.reporting'
 
-    def get_months(self, cr, uid, report_id, context=None):
+    @api.multi
+    def get_months(self):
+        self.ensure_one()
         date_array = []
-        date_format = '%Y-%m-%d'
-        report_o = self.browse(cr, uid, report_id, context=context)
-        if report_o.current_period_ids:
-            date_start = report_o.current_period_ids[0].date_start
-            date_end = report_o.current_period_ids[0].date_stop
-            for period in report_o.current_period_ids:
-                if period.date_start < date_start:
-                    date_start = period.date_start
-                if period.date_stop > date_end:
-                    date_end = period.date_stop
-            date_start = datetime.strptime(date_start, date_format)
-            date_end = datetime.strptime(date_end, date_format)
-            date_diff = date_end.month - date_start.month
+        if self.current_period_ids:
+            date_start = min(x.date_start for x in self.current_period_ids)
+            date_end = max(x.date_stop for x in self.current_period_ids)
+            date_diff = (fields.Date.from_string(date_start).month -
+                         fields.Date.from_string(date_end).month)
             while date_diff >= 0:
-                date_dict = {}
-                today = date_start + relativedelta(months=date_diff)
-                initial_date = datetime(today.year, today.month, 1)
-                pre_final_date = initial_date + relativedelta(months=1)
-                final_date = pre_final_date + relativedelta(days=-1)
-                str_initial_date = datetime.strftime(initial_date, date_format)
-                str_final_date = datetime.strftime(final_date, date_format)
-                date_dict.update({'start_month': str_initial_date,
-                                  'end_month': str_final_date})
-                date_array.append(date_dict)
+                today = (fields.Date.from_string(date_start) +
+                         relativedelta(months=date_diff))
+                str_initial_date = fields.Date.from_string(datetime(
+                    today.year, today.month, 1))
+                str_final_date = fields.Date.from_string(
+                    datetime(today.year, today.month, 1) +
+                    relativedelta(months=1) + relativedelta(days=-1))
+                date_array.append({'start_month': str_initial_date,
+                                   'end_month': str_final_date})
                 date_diff -= 1
             date_array.reverse()
         return date_array
 
-    _columns = {
-        'monthly_line_ids': fields.one2many('account.balance.reporting.line',
-                                            'month_report_id', 'Lines',
-                                            states={'done': [('readonly',
-                                                              True)]}),
-        'jan_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 1)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'feb_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 2)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'mar_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 3)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'apr_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 4)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'may_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 5)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'jun_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 6)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'jul_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 7)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'aug_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 8)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'sep_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 9)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'oct_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 10)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'nov_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 11)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        'dec_line_ids': fields.one2many('account.balance.reporting.line',
-                                        'month_report_id', 'Lines',
-                                        domain=[('month_num', '=', 12)],
-                                        states={'done': [('readonly',
-                                                          True)]}),
-        }
+    monthly_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        states={'done': [('readonly', True)]})
+    jan_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 1)], states={'done': [('readonly', True)]})
+    feb_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 2)], states={'done': [('readonly', True)]})
+    mar_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 3)], states={'done': [('readonly', True)]})
+    apr_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 4)], states={'done': [('readonly', True)]})
+    may_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 5)],  states={'done': [('readonly', True)]})
+    jun_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 6)], states={'done': [('readonly', True)]})
+    jul_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 7)], states={'done': [('readonly', True)]})
+    aug_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 8)], states={'done': [('readonly', True)]})
+    sep_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 9)], states={'done': [('readonly', True)]})
+    oct_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 10)], states={'done': [('readonly', True)]})
+    nov_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 11)], states={'done': [('readonly', True)]})
+    dec_line_ids = fields.One2many(
+        comodel_name='account.balance.reporting.line',
+        inverse_name='month_report_id', string='Lines',
+        domain=[('month_num', '=', 12)], states={'done': [('readonly', True)]})
 
-    def action_calculate(self, cr, uid, ids, context=None):
-        res = super(AccountBalanceReporting, self).action_calculate(
-            cr, uid, ids, context=context)
-        if not context:
-            context = {}
-        line_obj = self.pool['account.balance.reporting.line']
-        for report in self.browse(cr, uid, ids, context=context):
+    @api.multi
+    def prepare_reporting_line(self, template_line, month_date):
+        self.ensure_one()
+        line_vals = {
+            'code': template_line.code,
+            'name': template_line.name,
+            'month_report_id': self.id,
+            'report_id': False,
+            'template_line_id': template_line.id,
+            'parent_id': None,
+            'current_value': None,
+            'previous_value': None,
+            'sequence': template_line.sequence,
+            'css_class': template_line.css_class,
+            'month_start_date': month_date['start_month'],
+            'month_end_date': month_date['end_month']
+        }
+        return line_vals
+
+    @api.multi
+    def action_calculate(self):
+        res = super(AccountBalanceReporting, self).action_calculate()
+        line_obj = self.env['account.balance.reporting.line']
+        reports_with_tmpl = self.filtered(lambda x: x.template_id)
+        for report in reports_with_tmpl:
             # Clear the report data (unlink the lines of detail)
-            line_obj.unlink(cr, uid, [line.id for line in
-                                      report.monthly_line_ids],
-                            context=context)
+            report.monthly_line_ids.unlink()
             # Fill the report with a 'copy' of the lines of its template
             # (if it has one)
-            date_lst = self.get_months(cr, uid, report.id, context=context)
+            date_lst = self.get_months()
             for month_date in date_lst:
-                if report.template_id:
-                    for template_line in report.template_id.line_ids:
-                        line_obj.create(cr, uid,
-                                        {'code': template_line.code,
-                                         'name': template_line.name,
-                                         'month_report_id': report.id,
-                                         'report_id': False,
-                                         'template_line_id': template_line.id,
-                                         'parent_id': None,
-                                         'current_value': None,
-                                         'previous_value': None,
-                                         'sequence': template_line.sequence,
-                                         'css_class': template_line.css_class,
-                                         'month_start_date':
-                                            month_date['start_month'],
-                                         'month_end_date':
-                                            month_date['end_month']
-                                         }, context=context)
+                for template_line in report.template_id.line_ids:
+                    vals = self.prepare_reporting_line(template_line,
+                                                       month_date)
+                    line_obj.create(vals)
         # Set the parents of the lines in the report
         # Note: We reload the reports objects to refresh the lines of detail.
-        for report in self.browse(cr, uid, ids, context=context):
-            if report.template_id:
-                # Set line parents (now that they have been created)
-                for line in report.monthly_line_ids:
-                    tmpl_line = line.template_line_id
-                    if tmpl_line and tmpl_line.parent_id:
-                        parent_line_ids = line_obj.search(
-                            cr, uid, [('month_report_id', '=', report.id),
-                                      ('month_start_date', '=',
-                                       line.month_start_date),
-                                      ('code', '=', tmpl_line.parent_id.code)])
-                        line_obj.write(cr, uid, line.id,
-                                       {'parent_id': (parent_line_ids and
-                                                      parent_line_ids[0] or
-                                                      False),
-                                        }, context=context)
+        for report in reports_with_tmpl:
+            # Set line parents (now that they have been created)
+            for line in report.monthly_line_ids.filtered(
+                    lambda x: x.template_line_id and
+                    x.template_line_id.parent_id):
+                parent_lines = report.line_ids.filtered(
+                    lambda x: x.code ==
+                    line.template_line_id.parent_id.code and
+                    x.month_start_date == line.month_start_date)
+                line.parent_id = parent_lines and parent_lines[0] or False
         # Calculate the values of the lines
         # Note: We reload the reports objects to refresh the lines of detail.
-        for report in self.browse(cr, uid, ids, context=context):
-            if report.template_id:
-                # Refresh the report's lines values
-                for line in report.monthly_line_ids:
-                    # =========================================================
-                    # mirar el código de esta función para los mensuales
-                    # =========================================================
-                    context.update({'date_from': line.month_start_date,
-                                    'date_to': line.month_end_date
-                                    })
-                    line_obj.refresh_monthly_values(cr, uid, [line.id],
-                                                    context=context)
-                # Set the report as calculated
-                self.write(cr, uid, [report.id], {'state': 'calc_done'},
-                           context=context)
-            else:
-                # Ouch! no template: Going back to draft state.
-                self.write(cr, uid, [report.id], {'state': 'draft'},
-                           context=context)
+        for report in reports_with_tmpl:
+            # Refresh the report's lines values
+            for line in report.monthly_line_ids:
+                # =========================================================
+                # mirar el código de esta función para los mensuales
+                # =========================================================
+                line.with_context(
+                    date_from=line.month_start_date,
+                    date_to=line.month_end_date).refresh_monthly_values()
+            # Set the report as calculated
+            report.state = 'calc_done'
+            # Ouch! no template: Going back to draft state.
+        reports = self.filtered(lambda x: not x.template_id)
+        reports.write({'state': 'draft'})
         return res
 
 
-class AccountBalanceReportingLine(orm.Model):
-
+class AccountBalanceReportingLine(models.Model):
     """
     Account balance report line / Accounting concept
     One line of detail of the balance report representing an accounting
@@ -203,44 +171,30 @@ class AccountBalanceReportingLine(orm.Model):
     Its values (current and previous) are calculated based on the 'value'
     formula of the linked template line.
     """
-
     _inherit = "account.balance.reporting.line"
     _order = 'month_start_date, sequence'
 
-    def _get_month_name(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        for id in ids:
-            value = ''
-            value_int = 0
-            actual_o = self.browse(cr, uid, id, context=context)
-            if actual_o.month_start_date:
-                start_date = actual_o.month_start_date
-                start_date = datetime.strptime(start_date, '%Y-%m-%d')
-                value = datetime.strftime(start_date, "%B")
-                value_int = int(datetime.strftime(start_date, '%m'))
-            res[id] = {'month_name': value,
-                       'month_num': value_int}
-        return res
+    @api.one
+    @api.depends('month_start_date')
+    def _get_month_name(self):
+        start_date = fields.Date.from_string(self.month_start_date)
+        self.month_name = start_date.strftime("%B")
+        self.month_num = start_date.month
 
-    _columns = {'month_name': fields.function(_get_month_name, method=True,
-                                              type="char", size=64,
-                                              string="Month", store=True,
-                                              multi="month"),
-                'month_num': fields.function(_get_month_name, method=True,
-                                             type="integer", string="Month",
-                                             store=True, multi="month"),
-                'month_report_id': fields.many2one('account.balance.reporting',
-                                                   'Report',
-                                                   ondelete='cascade'),
-                'month_start_date': fields.date('Start Date'),
-                'month_end_date': fields.date('End Date'),
-                'acum_value': fields.float('Acumulated Value',
-                                           digits_compute=dp.get_precision(
-                                               'Account')),
-                }
+    month_name = fields.Char(
+        string='Month', compute='_get_month_name', store=True)
+    month_num = fields.Integer(
+        string='Month', compute='_get_month_name', store=True)
+    month_report_id = fields.Many2one(
+        comodel_name='account.balance.reporting', string='Report',
+        ondelete='cascade')
+    month_start_date = fields.Date(string='Start Date')
+    month_end_date = fields.Date(string='End Date')
+    acum_value = fields.Float(
+        string='Acumulated Value', digits=dp.get_precision('Account'))
 
-    def refresh_monthly_values(self, cr, uid, ids, context=None):
-
+    @api.multi
+    def refresh_monthly_values(self):
         """
         Recalculates the values of this report line using the
         linked line report values formulas:
@@ -255,7 +209,7 @@ class AccountBalanceReportingLine(orm.Model):
             concepts values.
         """
 
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self:
             tmpl_line = line.template_line_id
             balance_mode = int(tmpl_line.template_id.balance_mode)
             current_value = 0.0
@@ -268,19 +222,17 @@ class AccountBalanceReportingLine(orm.Model):
             # Remove characters after a ";" (we use ; for comments)
             if tmpl_value:
                 tmpl_value = tmpl_value.split(';')[0]
-            if not report.current_fiscalyear_id:
-                value = 0
-            else:
+            if report.current_fiscalyear_id:
                 if not tmpl_value:
                     # Empy template value => sum of the children values
-                    for child in line.child_ids:
-                        if child.calc_date != child.month_report_id.calc_date:
-                            # Tell the child to refresh its values
-                            child.refresh_monthly_values()
-                            # Reload the child data
-                            child = self.browse(cr, uid, child.id,
-                                                context=context)
-                        value += child.current_value
+                    for child in line.child_ids.filtered(
+                            lambda x: x.calc_date !=
+                            x.month_report_id.calc_date):
+                        # Tell the child to refresh its values
+                        child.refresh_monthly_values()
+                        # Reload the child data
+                        child = child.recompute()
+                    value += sum([x.current_value for x in line.child_ids])
                 elif re.match(r'^\-?[0-9]*\.[0-9]*$', tmpl_value):
                     # Number with decimal points => that number value
                     # (constant).
@@ -290,8 +242,7 @@ class AccountBalanceReportingLine(orm.Model):
                     # account balances. We will use the context to filter
                     # the accounts by fiscalyear and periods.
                     value = line._get_account_month_balance(tmpl_value,
-                                                            balance_mode,
-                                                            context=context)
+                                                            balance_mode)
                 elif re.match(r'^[\+\-0-9a-zA-Z_\*\ ]*$', tmpl_value):
                     # Account concept codes separated by "+" => sum of the
                     # concepts (template lines) values.
@@ -306,22 +257,17 @@ class AccountBalanceReportingLine(orm.Model):
                         # findall might return empty strings
                         if line_code:
                             # Search for the line (perfect match)
-                            line_ids = self.search(cr, uid,
-                                                   [('month_report_id', '=',
-                                                     report.id),
-                                                    ('code', '=', line_code),
-                                                    ('month_start_date', '=',
-                                                     line.month_start_date)
-                                                    ], context=context)
-                            for child in self.browse(cr, uid, line_ids,
-                                                     context=context):
-                                if (child.calc_date !=
-                                        child.month_report_id.calc_date):
-                                    child.refresh_monthly_values()
-                                    # Reload the child data
-                                    child = self.browse(cr, uid, child.id,
-                                                        context=context)
-                                value += child.current_value * sign
+                            line_ids = report.line_ids.filtered(
+                                lambda x: x.code == line_code and
+                                x.month_start_date == line.month_start_date)
+                            for child in line_ids.filtered(
+                                    lambda x: child.calc_date !=
+                                    child.month_report_id.calc_date):
+                                child.refresh_monthly_values()
+                                # Reload the child data
+                                child.recompute()
+                                value += sum([(x.current_value * sign)
+                                              for x in line_ids])
                 # Negate the value if needed
                 if tmpl_line.negate:
                     value = -value
@@ -330,24 +276,19 @@ class AccountBalanceReportingLine(orm.Model):
                              ('template_line_id', '=',
                               line.template_line_id.id),
                              ('month_num', '<', line.month_num)]
-            acum_lines_ids = self.search(cr, uid, search_domain,
-                                         context=context)
-            acum_value = 0.0
-            for acum_line in acum_lines_ids:
-                acum_o = self.browse(cr, uid, acum_line, context=context)
-                acum_value += acum_o.current_value
+            acum_lines_ids = self.search(search_domain)
+            acum_value = sum([x.current_value for x in acum_lines_ids])
             acum_value += current_value
             # Write the values
-            self.write(cr, uid, line.id,
-                       {'current_value': current_value,
+            line.write({'current_value': current_value,
                         'previous_value': previous_value,
                         'acum_value': acum_value,
                         'calc_date': line.month_report_id.calc_date,
-                        }, context=context)
+                        })
         return True
 
-    def _get_account_month_balance(self, cr, uid, ids, code,
-                                   balance_mode=0, context=None):
+    @api.multi
+    def _get_account_month_balance(self, code, balance_mode=0):
 
         """
         It returns the (debit, credit, balance*) tuple for a account with the
@@ -363,16 +304,15 @@ class AccountBalanceReportingLine(orm.Model):
         Also the user may specify to use only the debit or credit of the
         account instead of the balance writing "debit(551)" or "credit(551)".
         """
-
-        acc_obj = self.pool['account.account']
+        self.ensure_one()
+        acc_obj = self.env['account.account']
         logger = logging.getLogger(__name__)
         res = 0.0
-        line = self.browse(cr, uid, ids[0], context=context)
-        company_id = line.month_report_id.company_id.id
+        company_id = self.month_report_id.company_id.id
         # We iterate over the accounts listed in "code", so code can be
         # a string like "430+431+432-438"; accounts split by "+" will be added,
         # accounts split by "-" will be substracted.
-        for acc_code in re.findall('(-?\w*\(?[0-9a-zA-Z_]*\)?)', code):
+        for acc_code in re.findall(r'(-?\w*\(?[0-9a-zA-Z_]*\)?)', code):
             # Check if the code is valid (findall might return empty strings)
             acc_code = acc_code.strip()
             if acc_code:
@@ -403,23 +343,17 @@ class AccountBalanceReportingLine(orm.Model):
                 if acc_code.startswith('(') and acc_code.endswith(')'):
                     acc_code = acc_code[1:-1]
                 # Search for the account (perfect match)
-                account_ids = acc_obj.search(cr, uid,
-                                             [('code', '=', acc_code),
-                                              ('company_id', '=', company_id)
-                                              ], context=context)
+                account_ids = acc_obj.search(
+                    [('code', '=', acc_code), ('company_id', '=', company_id)])
                 if not account_ids:
                     # Search for a subaccount ending with '0'
-                    account_ids = acc_obj.search(cr, uid,
-                                                 [('code', '=like',
-                                                   '%s%%0' % acc_code),
-                                                  ('company_id', '=',
-                                                   company_id)
-                                                  ], context=context)
+                    account_ids = acc_obj.search(
+                        [('code', '=like', '%s%%0' % acc_code),
+                         ('company_id', '=', company_id)])
                 if not account_ids:
                     logger.warning("Account with code '%s' not found!"
                                    % acc_code)
-                for account in acc_obj.browse(cr, uid, account_ids,
-                                              context=context):
+                for account in account_ids:
                     if mode == 'debit':
                         res -= account.debit * sign
                     elif mode == 'credit':

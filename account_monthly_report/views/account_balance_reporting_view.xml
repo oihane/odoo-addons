@@ -4,7 +4,6 @@
     	<record model="ir.ui.view" id="view_account_balance_reporting_form_monthly">
             <field name="name">account.balance.reporting.monthly.form</field>
             <field name="model">account.balance.reporting</field>
-            <field name="type">form</field>
             <field name="inherit_id" ref="account_balance_reporting.view_account_balance_reporting_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//notebook//field[@name='line_ids']/.." position="after">
@@ -67,7 +66,6 @@
         <record model="ir.ui.view" id="monthly_reporting_line_search_view">
             <field name="name">account.reporting.line.monthly.search</field>
             <field name="model">account.balance.reporting.line</field>
-            <field name="type">search</field>
             <field name="priority" eval="20"/>
             <field name="arch" type="xml"> 
             	<search string="">
@@ -91,7 +89,6 @@
         <record model="ir.ui.view" id="monthly_reporting_line_tree_view">
             <field name="name">account.reporting.line.monthly.tree</field>
             <field name="model">account.balance.reporting.line</field>
-            <field name="type">tree</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
                <tree string="Report lines by month" editable="bottom"
@@ -117,7 +114,6 @@
         <record model="ir.ui.view" id="monthly_reporting_line_form_view">
             <field name="name">account.reporting.line.monthly.form</field>
             <field name="model">account.balance.reporting.line</field>
-            <field name="type">form</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
                <form string="Report line">

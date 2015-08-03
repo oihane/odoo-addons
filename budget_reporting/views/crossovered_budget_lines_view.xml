@@ -4,13 +4,12 @@
 	    <record model="ir.ui.view" id="product_budget_line_form_view">
 	         <field name="name">product.budget.line.form</field>
 	         <field name="model">product.budget.line</field>
-	         <field name="type">form</field>
 	         <field name="arch" type="xml">
 	             <form string="Product Budget Line">
 	             	 <field name="budget_line_id" select="1"/>
 	             	 <separator string="" colspan="4"/>
 	             	 <newline/>
-	                 <field name="product_id" select="1" on_change="onchange_product_id(product_id)"/>
+	                 <field name="product_id" select="1"/>
 	                 <newline/>
 	                 <group colspan="4" col="6">
 	                 <separator string="Expected Data" colspan="6"/>
@@ -26,10 +25,9 @@
 	     <record model="ir.ui.view" id="product_budget_line_tree_view">
 	         <field name="name">product.budget.line.tree</field>
 	         <field name="model">product.budget.line</field>
-	         <field name="type">tree</field>
 	         <field name="arch" type="xml">
 	             <tree string="Product Budget Line" editable="top">
-	                 <field name="product_id" on_change="onchange_product_id(product_id)"/>
+	                 <field name="product_id"/>
 	                 <field name="expected_qty"/>
 	                 <field name="expected_price"/>
 	                 <field name="expected_subtotal"/>
@@ -44,7 +42,6 @@
 	     <record model="ir.ui.view" id="product_budget_line_tree_view_ext">
 	         <field name="name">product.budget.line.tree</field>
 	         <field name="model">product.budget.line</field>
-	         <field name="type">tree</field>
 	         <field name="priority" eval="30"/>
 	         <field name="arch" type="xml">
 	             <tree string="Product Budget Line">
@@ -71,7 +68,6 @@
 	     <record id="product_budget_line_search_view" model="ir.ui.view">
             <field name="name">product.budget.line.search</field>
             <field name="model">product.budget.line</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Product Budget Line">
 	                <field name="product_id"/>
@@ -132,7 +128,6 @@
 		 <record id="crossovered_budget_lines_search_view" model="ir.ui.view">
             <field name="name">crossovered.budget.lines.search</field>
             <field name="model">crossovered.budget.lines</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Budget Lines">
 	                <field name="crossovered_budget_id"/>
@@ -160,7 +155,6 @@
      	<record model="ir.ui.view" id="crossovered_budget_lines_tree_inh_view">
 	          <field name="name">crossovered.budget.lines.inh.tree</field>
 	          <field name="model">crossovered.budget.lines</field>
-	          <field name="type">tree</field>
 	          <field name="inherit_id" 
 	          		ref="account_budget.view_crossovered_budget_line_tree"/>
 	          <field name="arch" type="xml">
@@ -175,7 +169,6 @@
                 <field name="name">crossovered.budget.lines.ava.form</field>
                 <field name="model">crossovered.budget.lines</field>
                 <field name="priority" eval="10"/>
-                <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Crossovered Budget Line">
                     	<group colspan="4" col="6">
@@ -189,9 +182,9 @@
                             <field name="partner_id" select="1"/>
                         </group>
                         <group colspan="4" col="6">
-	                        <field name="period_id" select="1" on_change="onchange_period(period_id,date_from,date_to)"/>
-	                        <field name="date_from" required="1" select="1" on_change="onchange_period(period_id,date_from,date_to)"/>
-	                        <field name="date_to" required="1" select="1" on_change="onchange_period(period_id,date_from,date_to)"/>
+	                        <field name="period_id" select="1" />
+	                        <field name="date_from" required="1" select="1"/>
+	                        <field name="date_to" required="1" select="1"/>
 	                        <newline/>
 	                        <field name="planned_amount" select="1"/>
 	                        <field name="practical_amount"/>
@@ -233,7 +226,6 @@
 		<record model="ir.ui.view" id="crossovered_budget_inh_form">
              <field name="name">crossovered.budget.inh.form</field>
              <field name="model">crossovered.budget</field>
-             <field name="type">form</field>
              <field name="inherit_id" ref="account_budget.crossovered_budget_view_form"/>
              <field name="arch" type="xml">
                 <xpath expr="//form//tree//field[@name='analytic_account_id']" position="after">
