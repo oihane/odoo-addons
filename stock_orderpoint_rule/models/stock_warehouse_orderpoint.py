@@ -59,7 +59,7 @@ class ProcurementOrder(models.Model):
 
     def _procure_orderpoint_confirm(
             self, cr, uid, use_new_cursor=False,
-            company_id = False, context=None):
+            company_id=False, context=None):
         '''
         Create procurement based on Orderpoint
 
@@ -87,22 +87,36 @@ class ProcurementOrder(models.Model):
                     prods = self._product_virtual_get(cr, uid, op)
                     if prods is None:
                         continue
-                    if float_compare(prods, op.product_min_qty, precision_rounding=op.product_uom.rounding) < 0:
-                        qty = max(op.product_min_qty, op.product_max_qty) - prods
-                        reste = op.qty_multiple > 0 and qty % op.qty_multiple or 0.0
-                        if float_compare(reste, 0.0, precision_rounding=op.product_uom.rounding) > 0:
+                    if float_compare(
+                            prods, op.product_min_qty,
+                            precision_rounding=op.product_uom.rounding) < 0:
+                        qty = max(
+                            op.product_min_qty, op.product_max_qty) - prods
+                        reste = op.qty_multiple > 0 and qty % \
+                            op.qty_multiple or 0.0
+                        if float_compare(
+                                reste, 0.0,
+                                precision_rounding=op.product_uom.rounding)\
+                                > 0:
                             qty += op.qty_multiple - reste
 
-                        if float_compare(qty, 0.0, precision_rounding=op.product_uom.rounding) <= 0:
+                        if float_compare(
+                                qty, 0.0,
+                                precision_rounding=op.product_uom.rounding)\
+                                <= 0:
                             continue
 
-                        qty -= orderpoint_obj.subtract_procurements(cr, uid, op, context=context)
+                        qty -= orderpoint_obj.subtract_procurements(
+                            cr, uid, op, context=context)
 
-                        qty_rounded = float_round(qty, precision_rounding=op.product_uom.rounding)
+                        qty_rounded = float_round(
+                            qty, precision_rounding=op.product_uom.rounding)
                         if qty_rounded > 0:
-                            proc_id = procurement_obj.create(cr, uid,
-                                                             self._prepare_orderpoint_procurement(cr, uid, op, qty_rounded, context=context),
-                                                             context=context)
+                            proc_id = procurement_obj.create(
+                                cr, uid,
+                                self._prepare_orderpoint_procurement(
+                                    cr, uid, op, qty_rounded,
+                                    context=context), context=context)
                             self.check(cr, uid, [proc_id])
                             self.run(cr, uid, [proc_id])
                     if use_new_cursor:
