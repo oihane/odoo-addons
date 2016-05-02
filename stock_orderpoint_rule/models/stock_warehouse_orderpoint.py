@@ -43,6 +43,12 @@ class StockPlanning(models.Model):
         orderpoint.custom_rule_max_qty = sum(
             moves.mapped('product_uom_qty'))
 
+    @api.multi
+    def custom_qty_to_standar(self):
+        for orderpoint in self.search({}):
+            orderpoint.product_min_qty = orderpoint.custom_rule_min_qty
+            orderpoint.product_max_qty = orderpoint.custom_rule_max_qty
+
     custom_stock_planning_rule = fields.Boolean(
         string='customize min. qty, and max. qty rules',
         related='company_id.custom_stock_planning_rule')

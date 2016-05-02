@@ -20,7 +20,8 @@
     "data": [
         "views/res_company_view.xml",
         "views/stock_planning_view.xml",
-        "wizard/orderpoint_procurement_view.xml"
+        "wizard/orderpoint_procurement_view.xml",
+        "data/cron.xml"
     ],
     "installable": True,
 }
