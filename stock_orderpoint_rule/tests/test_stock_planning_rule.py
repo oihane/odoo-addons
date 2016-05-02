@@ -22,6 +22,9 @@ class TestStockPlanningRule(common.TransactionCase):
                     'to_date': to_date}
         self.wiz = self.env['wiz.stock.planning'].create(wiz_vals)
         self.wiz.calculate_stock_planning()
+        self.wiz_orderpoint = self.env[
+            'procurement.orderpoint.compute'].create({})
+        self.wiz_orderpoint.selected_procure_calculation()
 
     def test_stock_planning_rule(self):
         orderpoint = self.env['stock.warehouse.orderpoint'].search([])
