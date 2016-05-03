@@ -13,7 +13,7 @@
             <field eval="False" name="doall" />
             <field eval="'stock.warehouse.orderpoint'" name="model" />
             <field eval="'custom_qty_to_standar'" name="function" />
-            <field eval="'()'" name="args" />
+            <field eval="'(None,)'" name="args" />
         </record>
     </data>
 </openerp>

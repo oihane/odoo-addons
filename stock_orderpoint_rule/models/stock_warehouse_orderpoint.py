@@ -45,7 +45,7 @@ class StockPlanning(models.Model):
 
     @api.multi
     def custom_qty_to_standar(self):
-        for orderpoint in self.search({}):
+        for orderpoint in self.search([]):
             orderpoint.product_min_qty = orderpoint.custom_rule_min_qty
             orderpoint.product_max_qty = orderpoint.custom_rule_max_qty
 
