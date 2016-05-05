@@ -16,8 +16,7 @@
     "depends": ['sale',
                 'purchase',
                 'stock',
-                'product_variant_cost'
-    ],
+                'product_variant_cost'],
     "data": [
         "views/res_company_view.xml",
         "views/stock_planning_view.xml",

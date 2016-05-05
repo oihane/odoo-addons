@@ -2,8 +2,6 @@
 # (c) 2015 Alfredo de la Fuente - AvanzOSC
 # License AGPL-3 - See http://www.gnu.org/licenses/agpl-3.0.html
 import openerp.tests.common as common
-from openerp import fields
-from dateutil.relativedelta import relativedelta
 
 
 class TestStockPlanningRule(common.TransactionCase):
@@ -14,15 +12,8 @@ class TestStockPlanningRule(common.TransactionCase):
         self.company.write({'custom_stock_planning_rule': True,
                             'stock_planning_min_days': 20,
                             'stock_planning_max_days': 60})
-        self.procurement = self.env['stock.warehouse.orderpoint'].create(
-            {
-                'name': 'OP/00001',
-                'product_id': self.env.ref('product.product_product_4'),
-
-            })
-        to_date = fields.Date.to_string(
-            fields.Date.from_string(fields.Date.today(self)) +
-            relativedelta(days=31))
+        self.procurement = self.env.ref(
+            'stock.stock_warehouse_orderpoint_shop1_cpu1')
         self.wiz_orderpoint = self.env[
             'procurement.orderpoint.compute'].create({})
         self.wiz_orderpoint.selected_procure_calculation()
