@@ -14,14 +14,15 @@ class TestStockPlanningRule(common.TransactionCase):
         self.company.write({'custom_stock_planning_rule': True,
                             'stock_planning_min_days': 20,
                             'stock_planning_max_days': 60})
+        self.procurement = self.env['stock.warehouse.orderpoint'].create(
+            {
+                'name': 'OP/00001',
+                'product_id': self.env.ref('product.product_product_4'),
+
+            })
         to_date = fields.Date.to_string(
             fields.Date.from_string(fields.Date.today(self)) +
             relativedelta(days=31))
-        wiz_vals = {'company': self.company.id,
-                    'days': 7,
-                    'to_date': to_date}
-        self.wiz = self.env['wiz.stock.planning'].create(wiz_vals)
-        self.wiz.calculate_stock_planning()
         self.wiz_orderpoint = self.env[
             'procurement.orderpoint.compute'].create({})
         self.wiz_orderpoint.selected_procure_calculation()

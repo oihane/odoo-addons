@@ -13,9 +13,10 @@
         "Alfredo de la Fuente <alfredodelafuente@avanzosc.es>",
     ],
     "category": "Warehouse Management",
-    "depends": [
-        "base",
-        "stock_planning",
+    "depends": ['sale',
+                'purchase',
+                'stock',
+                'product_variant_cost'
     ],
     "data": [
         "views/res_company_view.xml",
