@@ -3,16 +3,16 @@
 from odoo import api, models
 
 
-class AccountInvoiceLine(models.Model):
-    _inherit = "account.invoice.line"
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
 
     def write(self, values):
         result = super().write(values)
         if "price_unit" in values and values.get("price_unit", False):
-            for line in self.filtered(lambda x: x.invoice_id.type == "in_invoice"):
+            for line in self.filtered(lambda x: x.move_id.type == "in_move"):
                 product = line.mapped("product_id")
-                if line.invoice_id.state in ("draft", "cancel"):
-                    product.set_product_last_supplier_invoice()
+                if line.move_id.state in ("draft", "cancel"):
+                    product.set_product_last_supplier_move()
                 else:
-                    product.set_product_last_supplier_invoice(line.invoice_id.id)
+                    product.set_product_last_supplier_move(line.move_id.id)
         return result
